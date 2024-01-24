@@ -1,0 +1,30 @@
+FIRST:
+Configure Redis and pubsub by making 2 separate files:
+AppConfig and MessageConfiguration (refer to them)
+
+NEXT:
+Set up 2 different classes in the services folder, 1 containing the publisher and 1 containing the subscriber.
+To make it easier, you should call your subscriber as such
+
+SUBSCRIBER CLASS SETUP:
+The subscriber class needs to implement MessageListener and include public void onMessage(Message message, byte[] pattern)
+Once you override you can make it do whatever you want 
+
+PUBLISHER CLASS SETUP:
+In the publisher class, you will need to autowire the following:
+    @Autowired
+    @Qualifier ("poPubSub") //correspond to the topic in messageconfiguration
+    private ChannelTopic topic;
+
+    @Autowired
+    @Qualifier("registrationCache")
+    private RedisTemplate<String,String> template;
+The qualifier for the redis template needs to be the same as the one you set in your AppConfig
+
+
+After the setup, include this in the publisher class:
+    public void createPurchaseOrderManualTx(PurchaseOrder po){
+        // convertAndSend takes in String and obj as args. this triggers the reading
+        template.convertAndSend(topic.getTopic(), po.toString());
+    }
+This will send a message to the queue, and the subscriber will automatically invoke the method to read the message
